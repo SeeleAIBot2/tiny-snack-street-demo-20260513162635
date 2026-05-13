@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#ffbc4b" />
+  <title>Tiny Snack Street 小吃街老板</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Tiny Snack Street</p>
+        <h1>小吃街老板</h1>
+      </div>
+      <div class="coin-pill" aria-live="polite"><span>🪙</span><strong id="coins">0</strong></div>
+    </header>
+
+    <section id="offlinePanel" class="offline-panel hidden">
+      <div>
+        <strong>离线收益已到账</strong>
+        <p id="offlineText">助手帮你赚了 0 金币</p>
+      </div>
+      <button id="claimOfflineBtn" class="mini-btn">收下</button>
+    </section>
+
+    <section class="street-card">
+      <div class="street-sky">
+        <span class="cloud c1">☁️</span><span class="cloud c2">☁️</span>
+        <div class="signboard">今日主打：<span id="featuredItem">芝士饭团</span></div>
+      </div>
+
+      <div class="queue-row" id="queue" aria-label="顾客队列"></div>
+
+      <div class="stall-wrap">
+        <div class="stall">
+          <div class="awning"><span></span><span></span><span></span><span></span></div>
+          <div class="counter">
+            <div class="chef">👩‍🍳</div>
+            <div class="workbench">
+              <div id="currentDish" class="dish-display">🍙</div>
+              <div class="progress-shell"><div id="cookProgress" class="progress-fill"></div></div>
+              <p id="orderHint">点击“开始制作”服务第 1 位顾客</p>
+            </div>
+          </div>
+        </div>
+        <div class="income-pop-layer" id="popLayer"></div>
+      </div>
+    </section>
+
+    <section class="control-card">
+      <div class="order-box">
+        <div>
+          <span class="label">当前订单</span>
+          <h2 id="orderName">等待顾客...</h2>
+        </div>
+        <div class="price-tag">+<span id="orderReward">0</span></div>
+      </div>
+
+      <div class="primary-actions">
+        <button id="cookBtn" class="big-btn">开始制作</button>
+        <button id="serveBtn" class="big-btn secondary" disabled>收银</button>
+      </div>
+
+      <div class="ad-actions">
+        <button id="doubleBtn" class="ad-btn">📺 双倍下一单</button>
+        <button id="rushBtn" class="ad-btn">⚡ 快速制作</button>
+      </div>
+    </section>
+
+    <section class="upgrade-card">
+      <div class="section-title">
+        <h2>升级摊位</h2>
+        <button id="resetBtn" class="text-btn">重置</button>
+      </div>
+      <div id="upgrades" class="upgrade-list"></div>
+    </section>
+
+    <section class="tip-card">
+      <strong>新手目标</strong>
+      <p id="questText">完成 3 单后解锁柠檬气泡水，雇佣助手会自动接单赚钱。</p>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <script src="game.js"></script>
+</body>
+</html>
