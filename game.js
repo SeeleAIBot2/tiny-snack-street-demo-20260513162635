@@ -16,7 +16,17 @@
     helperLevel: 0,
     stallLevel: 1,
     nextDouble: false,
-    lastSeen: Date.now()
+    lastSeen: Date.now(),
+    // === New WeChat Mini Game State ===
+    signInDays: 0,
+    lastSignInDate: null,
+    doubleIncomeEnd: 0,
+    tasks: [
+      { id: 'daily1', name: '完成5单', target: 5, progress: 0, reward: 80, claimed: false },
+      { id: 'daily2', name: '赚200金币', target: 200, progress: 0, reward: 120, claimed: false },
+      { id: 'daily3', name: '升级一次摊位', target: 1, progress: 0, reward: 180, claimed: false }
+    ],
+    achievements: []
   };
 
   let state = loadState();
@@ -35,7 +45,13 @@
     claimOfflineBtn: $('claimOfflineBtn'), queue: $('queue'), currentDish: $('currentDish'), cookProgress: $('cookProgress'),
     orderHint: $('orderHint'), orderName: $('orderName'), orderReward: $('orderReward'), cookBtn: $('cookBtn'),
     serveBtn: $('serveBtn'), doubleBtn: $('doubleBtn'), rushBtn: $('rushBtn'), upgrades: $('upgrades'), resetBtn: $('resetBtn'),
-    toast: $('toast'), popLayer: $('popLayer'), questText: $('questText')
+    toast: $('toast'), popLayer: $('popLayer'), questText: $('questText'),
+    // === New WeChat Mini Game Elements ===
+    taskList: $('taskList'), signInBadge: $('signInBadge'), shareBtn: $('shareBtn'), rankBtn: $('rankBtn'),
+    inviteBtn: $('inviteBtn'), modalOverlay: $('modalOverlay'), adModal: $('adModal'), adRewardText: $('adRewardText'),
+    adProgressFill: $('.ad-progress-fill'), adWatchBtn: $('adWatchBtn'), adCancelBtn: $('adCancelBtn'),
+    shareModal: $('shareModal'), shareConfirmBtn: $('shareConfirmBtn'), shareCancelBtn: $('shareCancelBtn'),
+    signInModal: $('signInModal'), signInGrid: $('signInGrid'), signInClaimBtn: $('signInClaimBtn'), signInCancelBtn: $('signInCancelBtn')
   };
 
   function loadState() {
@@ -272,6 +288,151 @@
     }
   }
 
+  // === New WeChat Mini Game Core Functions ===
+  function getTodayDateStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function checkSignIn() {
+    const today = getTodayDateStr();
+    const signedInToday = state.lastSignInDate === today;
+    els.signInBadge.classList.toggle('hidden', !signedInToday);
+    els.signInBadge.textContent = signedInToday ? '✅ 已签到' : '📅 待签到';
+    if (!signedInToday && Math.random() < 0.6) {
+      setTimeout(() => openSignInModal(), 3000);
+    }
+  }
+
+  function openSignInModal() {
+    els.modalOverlay.classList.remove('hidden');
+    els.signInModal.classList.remove('hidden');
+    renderSignInGrid();
+  }
+
+  function renderSignInGrid() {
+    const rewards = [10,30,50,80,120,200,500];
+    const today = getTodayDateStr();
+    const signedInToday = state.lastSignInDate === today;
+    let html = '';
+    for (let i=0; i<7; i++) {
+      const day = i+1;
+      const claimed = i < state.signInDays || (i === state.signInDays && signedInToday);
+      const isToday = i === state.signInDays;
+      html += `<div class="sign-in-day ${claimed ? 'claimed' : ''} ${isToday ? 'today' : ''}">
+        <div>${claimed ? '✅' : '🗓️'}</div>
+        <div>第${day}天</div>
+        <div>💰 ${rewards[i]}</div>
+      </div>`;
+    }
+    els.signInGrid.innerHTML = html;
+    els.signInClaimBtn.disabled = signedInToday;
+    els.signInClaimBtn.textContent = signedInToday ? '今日已领取' : '领取今日奖励';
+  }
+
+  function claimSignIn() {
+    const today = getTodayDateStr();
+    if (state.lastSignInDate === today) return toast('今日已签到');
+    const rewards = [10,30,50,80,120,200,500];
+    const reward = rewards[state.signInDays];
+    state.coins += reward;
+    state.signInDays = (state.signInDays + 1) % 7;
+    state.lastSignInDate = today;
+    toast(`签到成功！获得 ${reward} 金币`);
+    checkSignIn();
+    renderSignInGrid();
+    scheduleSave();
+  }
+
+  function renderTasks() {
+    let html = '';
+    state.tasks.forEach(task => {
+      const completed = task.progress >= task.target;
+      html += `<div class="task-item ${completed ? 'completed' : ''}" data-id="${task.id}">
+        <div>
+          <h4>${task.name}</h4>
+          <p>奖励 ${task.reward} 金币</p>
+        </div>
+        <div style="display: flex; align-items: center;">
+          <span class="task-progress">${task.progress}/${task.target}</span>
+          <button class="task-claim-btn ${completed && !task.claimed ? '' : 'claimed'}" ${!completed || task.claimed ? 'disabled' : ''}>
+            ${task.claimed ? '已领取' : completed ? '领取' : '进行中'}
+          </button>
+        </div>
+      </div>`;
+    });
+    els.taskList.innerHTML = html;
+  }
+
+  function updateTaskProgress(taskId, add = 1) {
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task || task.claimed) return;
+    task.progress = Math.min(task.target, task.progress + add);
+    scheduleSave();
+    renderTasks();
+  }
+
+  function claimTask(taskId) {
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task || task.claimed || task.progress < task.target) return;
+    task.claimed = true;
+    state.coins += task.reward;
+    toast(`任务完成！获得 ${task.reward} 金币`);
+    scheduleSave();
+    renderTasks();
+  }
+
+  // === Ad System (Natural Triggered) ===
+  let currentAdReward = () => {};
+  function openAdModal(rewardText, onReward) {
+    els.adRewardText.textContent = rewardText;
+    els.adProgressFill.style.width = '0%';
+    currentAdReward = onReward;
+    els.modalOverlay.classList.remove('hidden');
+    els.adModal.classList.remove('hidden');
+  }
+
+  function simulateAdWatch() {
+    els.adWatchBtn.disabled = true;
+    els.adWatchBtn.textContent = '播放中...';
+    let progress = 0;
+    const timer = setInterval(() => {
+      progress += 10;
+      els.adProgressFill.style.width = `${progress}%`;
+      if (progress >= 100) {
+        clearInterval(timer);
+        closeModals();
+        currentAdReward?.();
+        toast('广告观看完成，奖励已到账');
+        els.adWatchBtn.disabled = false;
+        els.adWatchBtn.textContent = '观看广告';
+      }
+    }, 300);
+  }
+
+  // === Share System (WeChat Hooks) ===
+  function openShareModal() {
+    els.modalOverlay.classList.remove('hidden');
+    els.shareModal.classList.remove('hidden');
+  }
+
+  function doShare() {
+    closeModals();
+    state.coins += 500;
+    state.doubleIncomeEnd = Date.now() + 3600 * 1000;
+    toast('分享成功！获得500金币+1小时双倍收益');
+    scheduleSave();
+    // 真实微信小游戏环境下调用 wx.shareAppMessage()
+  }
+
+  function closeModals() {
+    els.modalOverlay.classList.add('hidden');
+    els.adModal.classList.add('hidden');
+    els.shareModal.classList.add('hidden');
+    els.signInModal.classList.add('hidden');
+  }
+
+  // === Enhanced Core Functions ===
   function applyOfflineIncome() {
     const now = Date.now();
     const awayMs = Math.max(0, now - (state.lastSeen || now));
@@ -280,10 +441,30 @@
     const avgReward = rewardFor(unlockedMenu()[0] || menu[0]);
     const income = Math.floor(minutes * state.helperLevel * avgReward * 0.55);
     if (income <= 0) return;
-    state.coins += income;
     els.offlineText.textContent = `助手帮你赚了 ${fmt(income)} 金币（最多统计 3 小时）`;
     els.offlinePanel.classList.remove('hidden');
-    scheduleSave();
+    // 广告翻倍选项
+    const doubleBtn = document.createElement('button');
+    doubleBtn.className = 'mini-btn';
+    doubleBtn.textContent = '📺 广告翻倍';
+    doubleBtn.addEventListener('click', () => {
+      openAdModal('观看广告即可获得双倍离线收益', () => {
+        state.coins += income * 2;
+        toast(`翻倍成功！获得 ${fmt(income*2)} 金币`);
+      });
+    });
+    els.offlinePanel.appendChild(doubleBtn);
+    els.claimOfflineBtn.addEventListener('click', () => {
+      state.coins += income;
+      scheduleSave();
+    }, { once: true });
+  }
+
+  function rewardFor(item) {
+    const profit = 1 + (state.profitLevel - 1) * 0.32;
+    const stall = 1 + (state.stallLevel - 1) * 0.16;
+    const double = Date.now() < state.doubleIncomeEnd ? 2 : 1;
+    return Math.round(item.baseReward * profit * stall * double);
   }
 
   function helperLoop() {
@@ -318,8 +499,46 @@
     saveState();
   });
 
+  // === New WeChat Mini Game Event Bindings ===
+  els.taskList.addEventListener('click', (e) => {
+    const item = e.target.closest('.task-item');
+    if (item) {
+      const id = item.dataset.id;
+      const claimBtn = item.querySelector('.task-claim-btn');
+      if (claimBtn && !claimBtn.disabled) {
+        claimTask(id);
+      }
+    }
+  });
+
+  els.signInBadge.addEventListener('click', openSignInModal);
+  els.shareBtn.addEventListener('click', openShareModal);
+  els.rankBtn.addEventListener('click', () => toast('排行榜功能开发中，即将上线'));
+  els.inviteBtn.addEventListener('click', () => openAdModal('邀请好友即可获得500金币奖励', () => {
+    state.coins += 500;
+    toast('邀请成功！获得500金币');
+  }));
+
+  // Modal events
+  els.modalOverlay.addEventListener('click', closeModals);
+  els.adCancelBtn.addEventListener('click', closeModals);
+  els.adWatchBtn.addEventListener('click', simulateAdWatch);
+  els.shareCancelBtn.addEventListener('click', closeModals);
+  els.shareConfirmBtn.addEventListener('click', doShare);
+  els.signInCancelBtn.addEventListener('click', closeModals);
+  els.signInClaimBtn.addEventListener('click', claimSignIn);
+
   window.addEventListener('beforeunload', saveState);
   document.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
+
+  function renderAll() {
+    renderCoins();
+    renderQueue();
+    renderOrder();
+    renderUpgrades();
+    renderTasks();
+    checkSignIn();
+  }
 
   applyOfflineIncome();
   renderAll();

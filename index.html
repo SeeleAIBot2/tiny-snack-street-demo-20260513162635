@@ -78,12 +78,69 @@
     </section>
 
     <section class="tip-card">
-      <strong>新手目标</strong>
+      <strong>今日目标</strong>
       <p id="questText">完成 3 单后解锁柠檬气泡水，雇佣助手会自动接单赚钱。</p>
+    </section>
+
+    <section class="task-card" id="taskCard">
+      <div class="section-title">
+        <h2>日常任务</h2>
+        <span id="signInBadge" class="badge">✅ 已签到</span>
+      </div>
+      <div id="taskList" class="task-list"></div>
+    </section>
+
+    <section class="social-card" id="socialCard">
+      <div class="section-title">
+        <h2>排行榜&分享</h2>
+      </div>
+      <div class="social-actions">
+        <button id="shareBtn" class="social-btn">📤 分享战绩</button>
+        <button id="rankBtn" class="social-btn">🏆 排行榜</button>
+        <button id="inviteBtn" class="social-btn">👥 邀请好友</button>
+      </div>
+      <div class="rank-preview" id="rankPreview">
+        <p>今日榜首：<strong>小吃街大佬 123 单，金币 88000+</strong></p>
+      </div>
     </section>
   </main>
 
+  <div id="modalOverlay" class="modal-overlay hidden"></div>
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <div id="adModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>📺 看广告得奖励</h3>
+      <p id="adRewardText">观看30秒广告即可获得奖励</p>
+      <div class="ad-progress"><span id="adProgressShell"><div class="ad-progress-fill"></div></div>
+      <div class="modal-actions">
+        <button id="adWatchBtn" class="primary-btn">观看广告</button>
+        <button id="adCancelBtn" class="secondary-btn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="shareModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>📤 分享得奖励</h3>
+      <p>分享到群/好友即可获得</p>
+      <div class="reward-box">+ 500 金币 + 双倍收益1小时</div>
+      <div class="modal-actions">
+        <button id="shareConfirmBtn" class="primary-btn">分享到微信</button>
+        <button id="shareCancelBtn" class="secondary-btn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="signInModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>✅ 连续登录奖励</h3>
+      <div class="sign-in-grid" id="signInGrid"></div>
+      <div class="modal-actions">
+        <button id="signInClaimBtn" class="primary-btn">领取今日奖励</button>
+        <button id="signInCancelBtn" class="secondary-btn">关闭</button>
+      </div>
+    </div>
+  </div>
   <script src="game.js"></script>
 </body>
 </html>
