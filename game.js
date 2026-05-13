@@ -49,7 +49,7 @@
     // === New WeChat Mini Game Elements ===
     taskList: $('taskList'), signInBadge: $('signInBadge'), shareBtn: $('shareBtn'), rankBtn: $('rankBtn'),
     inviteBtn: $('inviteBtn'), modalOverlay: $('modalOverlay'), adModal: $('adModal'), adRewardText: $('adRewardText'),
-    adProgressFill: $('.ad-progress-fill'), adWatchBtn: $('adWatchBtn'), adCancelBtn: $('adCancelBtn'),
+    adProgressFill: document.querySelector('.ad-progress-fill'), adWatchBtn: $('adWatchBtn'), adCancelBtn: $('adCancelBtn'),
     shareModal: $('shareModal'), shareConfirmBtn: $('shareConfirmBtn'), shareCancelBtn: $('shareCancelBtn'),
     signInModal: $('signInModal'), signInGrid: $('signInGrid'), signInClaimBtn: $('signInClaimBtn'), signInCancelBtn: $('signInCancelBtn')
   };
@@ -75,6 +75,10 @@
 
   function fmt(n) { return Math.floor(n).toLocaleString('zh-CN'); }
 
+  function renderCoins() {
+    els.coins.textContent = fmt(state.coins);
+  }
+
   function unlockedMenu() {
     return menu.filter(item => state.ordersServed >= item.unlockOrders).slice(0, Math.min(menu.length, state.stallLevel + 1));
   }
@@ -82,12 +86,6 @@
   function randomMenuItem() {
     const list = unlockedMenu();
     return list[Math.floor(Math.random() * list.length)] || menu[0];
-  }
-
-  function rewardFor(item) {
-    const profit = 1 + (state.profitLevel - 1) * 0.32;
-    const stall = 1 + (state.stallLevel - 1) * 0.16;
-    return Math.round(item.baseReward * profit * stall);
   }
 
   function getCookDuration() {
@@ -179,11 +177,13 @@
 
   function renderAll() {
     fillQueue();
-    els.coins.textContent = fmt(state.coins);
+    renderCoins();
     renderQueue();
     renderOrder();
     renderUpgrades();
     renderQuest();
+    renderTasks();
+    checkSignIn();
     els.cookBtn.disabled = isCooking || cooked || !currentOrder;
     els.serveBtn.disabled = !cooked;
     els.doubleBtn.textContent = state.nextDouble ? '✅ 下一单已双倍' : '📺 双倍下一单';
@@ -237,6 +237,8 @@
     const reward = base * (state.nextDouble ? 2 : 1);
     state.coins += reward;
     state.ordersServed += 1;
+    updateTaskProgress('daily1', 1);
+    updateTaskProgress('daily2', reward);
     state.nextDouble = false;
     queue.shift();
     currentOrder = queue[0] || null;
@@ -261,6 +263,7 @@
     }
     state.coins -= cost;
     state[levelKey] += 1;
+    updateTaskProgress('daily3', 1);
     toast(type === 'helper' ? '助手上岗：会自动制作订单' : '升级成功，效率提升');
     scheduleSave();
     renderAll();
@@ -297,11 +300,9 @@
   function checkSignIn() {
     const today = getTodayDateStr();
     const signedInToday = state.lastSignInDate === today;
-    els.signInBadge.classList.toggle('hidden', !signedInToday);
+    els.signInBadge.classList.remove('hidden');
     els.signInBadge.textContent = signedInToday ? '✅ 已签到' : '📅 待签到';
-    if (!signedInToday && Math.random() < 0.6) {
-      setTimeout(() => openSignInModal(), 3000);
-    }
+    // 首屏不自动弹签到，避免遮挡主流程；玩家点击“待签到”手动领取。
   }
 
   function openSignInModal() {
@@ -530,15 +531,6 @@
 
   window.addEventListener('beforeunload', saveState);
   document.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
-
-  function renderAll() {
-    renderCoins();
-    renderQueue();
-    renderOrder();
-    renderUpgrades();
-    renderTasks();
-    checkSignIn();
-  }
 
   applyOfflineIncome();
   renderAll();
