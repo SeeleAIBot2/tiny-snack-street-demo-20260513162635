@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#ffbc4b" />
   <title>Tiny Snack Street 小吃街老板</title>
-  <link rel="stylesheet" href="style.css?v=fix-init-202605131720" />
+  <link rel="stylesheet" href="style.css?v=compliance-202605142045" />
 </head>
 <body>
   <main class="app-shell">
@@ -20,7 +20,7 @@
     <section id="offlinePanel" class="offline-panel hidden">
       <div>
         <strong>离线收益已到账</strong>
-        <p id="offlineText">助手帮你赚了 0 金币</p>
+        <p id="offlineText">助手帮你赚了 0 小吃币</p>
       </div>
       <button id="claimOfflineBtn" class="mini-btn">收下</button>
     </section>
@@ -64,8 +64,8 @@
       </div>
 
       <div class="ad-actions">
-        <button id="doubleBtn" class="ad-btn">📺 双倍下一单</button>
-        <button id="rushBtn" class="ad-btn">⚡ 快速制作</button>
+        <button id="doubleBtn" class="ad-btn">📺 激励广告·双倍下一单</button>
+        <button id="rushBtn" class="ad-btn">⚡ 激励广告·快速制作</button>
       </div>
     </section>
 
@@ -96,24 +96,57 @@
       </div>
       <div class="social-actions">
         <button id="shareBtn" class="social-btn">📤 分享战绩</button>
-        <button id="rankBtn" class="social-btn">🏆 排行榜</button>
+        <button id="rankBtn" class="social-btn">🏆 好友排行</button>
         <button id="inviteBtn" class="social-btn">👥 邀请好友</button>
       </div>
       <div class="rank-preview" id="rankPreview">
-        <p>今日榜首：<strong>小吃街大佬 123 单，金币 88000+</strong></p>
+        <p>好友排行为微信开放数据域预留能力；当前网页仅展示模拟入口，不读取真实用户信息。</p>
       </div>
     </section>
   </main>
 
   <div id="modalOverlay" class="modal-overlay hidden"></div>
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <section class="compliance-card" aria-label="合规说明">
+    <span>适龄 8+｜无充值｜本地试玩存档</span>
+    <button id="privacyBtn" class="legal-link">隐私说明</button>
+    <button id="termsBtn" class="legal-link">用户协议</button>
+  </section>
+
+  <div id="complianceModal" class="modal hidden">
+    <div class="modal-content legal-modal">
+      <h3>开始试玩前请确认</h3>
+      <ul class="legal-list">
+        <li>本版本是微信小游戏发布前的 H5 原型，不含真实充值、抽奖、赌博或现金提现。</li>
+        <li>当前仅使用浏览器 localStorage 保存小吃币、订单和签到进度；不采集姓名、手机号、定位等个人敏感信息。</li>
+        <li>激励广告、分享、好友排行均为模拟入口；正式微信小游戏需接入微信官方 API，并由用户主动触发。</li>
+        <li>建议 8 周岁以上用户体验；未成年人请在监护人同意和陪同下使用。</li>
+      </ul>
+      <div class="modal-actions">
+        <button id="acceptComplianceBtn" class="primary-btn">同意并开始试玩</button>
+        <button id="exitComplianceBtn" class="secondary-btn">暂不进入</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="legalModal" class="modal hidden">
+    <div class="modal-content legal-modal">
+      <h3 id="legalTitle">合规说明</h3>
+      <div id="legalBody" class="legal-body"></div>
+      <div class="modal-actions single">
+        <button id="legalCloseBtn" class="primary-btn">知道了</button>
+      </div>
+    </div>
+  </div>
+
   <div id="adModal" class="modal hidden">
     <div class="modal-content">
-      <h3>📺 看广告得奖励</h3>
-      <p id="adRewardText">观看30秒广告即可获得奖励</p>
+      <h3>📺 激励视频广告（模拟）</h3>
+      <p id="adRewardText">用户主动观看模拟广告后获得奖励；正式发布需接入微信激励视频广告 API。</p>
       <div class="ad-progress" id="adProgressShell"><div class="ad-progress-fill"></div></div>
       <div class="modal-actions">
-        <button id="adWatchBtn" class="primary-btn">观看广告</button>
+        <button id="adWatchBtn" class="primary-btn">同意并模拟观看</button>
         <button id="adCancelBtn" class="secondary-btn">取消</button>
       </div>
     </div>
@@ -121,11 +154,11 @@
 
   <div id="shareModal" class="modal hidden">
     <div class="modal-content">
-      <h3>📤 分享得奖励</h3>
-      <p>分享到群/好友即可获得</p>
-      <div class="reward-box">+ 500 金币 + 双倍收益1小时</div>
+      <h3>📤 分享战绩</h3>
+      <p>分享仅用于展示你的经营成绩，不设置强制分享或分享奖励，避免诱导分享。</p>
+      <div class="reward-box" id="shareCardText">今日小吃街战绩：已服务 0 单</div>
       <div class="modal-actions">
-        <button id="shareConfirmBtn" class="primary-btn">分享到微信</button>
+        <button id="shareConfirmBtn" class="primary-btn">打开微信分享面板</button>
         <button id="shareCancelBtn" class="secondary-btn">取消</button>
       </div>
     </div>
@@ -141,6 +174,6 @@
       </div>
     </div>
   </div>
-  <script src="game.js?v=fix-init-202605131720"></script>
+  <script src="game.js?v=compliance-202605142045"></script>
 </body>
 </html>

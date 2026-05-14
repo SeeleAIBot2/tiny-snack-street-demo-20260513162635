@@ -23,10 +23,11 @@
     doubleIncomeEnd: 0,
     tasks: [
       { id: 'daily1', name: '完成5单', target: 5, progress: 0, reward: 80, claimed: false },
-      { id: 'daily2', name: '赚200金币', target: 200, progress: 0, reward: 120, claimed: false },
+      { id: 'daily2', name: '赚200小吃币', target: 200, progress: 0, reward: 120, claimed: false },
       { id: 'daily3', name: '升级一次摊位', target: 1, progress: 0, reward: 180, claimed: false }
     ],
-    achievements: []
+    achievements: [],
+    complianceAccepted: false
   };
 
   let state = loadState();
@@ -46,21 +47,28 @@
     orderHint: $('orderHint'), orderName: $('orderName'), orderReward: $('orderReward'), cookBtn: $('cookBtn'),
     serveBtn: $('serveBtn'), doubleBtn: $('doubleBtn'), rushBtn: $('rushBtn'), upgrades: $('upgrades'), resetBtn: $('resetBtn'),
     toast: $('toast'), popLayer: $('popLayer'), questText: $('questText'),
+    complianceModal: $('complianceModal'), acceptComplianceBtn: $('acceptComplianceBtn'), exitComplianceBtn: $('exitComplianceBtn'),
+    privacyBtn: $('privacyBtn'), termsBtn: $('termsBtn'), legalModal: $('legalModal'), legalTitle: $('legalTitle'), legalBody: $('legalBody'), legalCloseBtn: $('legalCloseBtn'),
     // === New WeChat Mini Game Elements ===
     taskList: $('taskList'), signInBadge: $('signInBadge'), shareBtn: $('shareBtn'), rankBtn: $('rankBtn'),
     inviteBtn: $('inviteBtn'), modalOverlay: $('modalOverlay'), adModal: $('adModal'), adRewardText: $('adRewardText'),
     adProgressFill: document.querySelector('.ad-progress-fill'), adWatchBtn: $('adWatchBtn'), adCancelBtn: $('adCancelBtn'),
-    shareModal: $('shareModal'), shareConfirmBtn: $('shareConfirmBtn'), shareCancelBtn: $('shareCancelBtn'),
+    shareModal: $('shareModal'), shareCardText: $('shareCardText'), shareConfirmBtn: $('shareConfirmBtn'), shareCancelBtn: $('shareCancelBtn'),
     signInModal: $('signInModal'), signInGrid: $('signInGrid'), signInClaimBtn: $('signInClaimBtn'), signInCancelBtn: $('signInCancelBtn')
   };
 
   function loadState() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-      return { ...defaultState, ...(saved || {}) };
+      return normalizeState(saved || {});
     } catch (_) {
-      return { ...defaultState };
+      return normalizeState({});
     }
+  }
+
+  function normalizeState(next) {
+    const tasks = Array.isArray(next.tasks) && next.tasks.length ? next.tasks : defaultState.tasks.map(t => ({ ...t }));
+    return { ...defaultState, ...next, tasks };
   }
 
   function saveState() {
@@ -186,7 +194,36 @@
     checkSignIn();
     els.cookBtn.disabled = isCooking || cooked || !currentOrder;
     els.serveBtn.disabled = !cooked;
-    els.doubleBtn.textContent = state.nextDouble ? '✅ 下一单已双倍' : '📺 双倍下一单';
+    els.doubleBtn.textContent = state.nextDouble ? '✅ 下一单已双倍' : '📺 激励广告·双倍下一单';
+  }
+
+  function ensureComplianceAccepted() {
+    if (state.complianceAccepted) return true;
+    openComplianceModal();
+    toast('请先确认合规说明后再开始试玩');
+    return false;
+  }
+
+  function openComplianceModal() {
+    els.modalOverlay.classList.remove('hidden');
+    els.complianceModal.classList.remove('hidden');
+  }
+
+  function acceptCompliance() {
+    state.complianceAccepted = true;
+    scheduleSave();
+    closeModals();
+    toast('已确认，开始试玩');
+  }
+
+  function openLegal(type) {
+    const isPrivacy = type === 'privacy';
+    els.legalTitle.textContent = isPrivacy ? '隐私说明' : '用户协议';
+    els.legalBody.innerHTML = isPrivacy
+      ? '<p>本 H5 原型仅在本机浏览器 localStorage 保存小吃币、订单数、升级等级、签到进度和最后在线时间。</p><p>当前不提供账号注册，不采集姓名、手机号、身份证、定位、微信头像昵称等个人信息，不向服务器上传数据。</p><p>正式微信小游戏发布时，如接入登录、排行榜、广告或云存档，应在微信平台补充完整隐私协议并通过用户授权。</p>'
+      : '<p>本游戏为轻度经营试玩原型，不含充值、抽奖、赌博、现金提现或实物兑换。</p><p>激励广告、分享、好友排行目前均为模拟能力；正式上线需接入微信官方接口，不得强制分享、诱导分享或虚假承诺奖励。</p><p>建议 8 周岁以上用户体验；未成年人应在监护人同意和陪同下使用。</p>';
+    els.modalOverlay.classList.remove('hidden');
+    els.legalModal.classList.remove('hidden');
   }
 
   function toast(text) {
@@ -206,6 +243,7 @@
   }
 
   function startCooking(auto = false) {
+    if (!auto && !ensureComplianceAccepted()) return;
     if (!currentOrder || isCooking || cooked) return;
     isCooking = true;
     cookStartedAt = performance.now();
@@ -252,13 +290,14 @@
   }
 
   function buyUpgrade(type) {
+    if (!ensureComplianceAccepted()) return;
     const key = `${type}Level`;
     if (type === 'stall') key;
     const levelKey = type === 'speed' ? 'speedLevel' : type === 'profit' ? 'profitLevel' : type === 'helper' ? 'helperLevel' : 'stallLevel';
     if (state[levelKey] >= upgradeMax(type)) return;
     const cost = upgradeCost(type);
     if (state.coins < cost) {
-      toast(`金币不够，还差 ${fmt(cost - state.coins)}`);
+      toast(`小吃币不够，还差 ${fmt(cost - state.coins)}`);
       return;
     }
     state.coins -= cost;
@@ -270,25 +309,29 @@
   }
 
   function fakeAdDouble() {
-    state.nextDouble = true;
-    toast('广告占位：已模拟看完，下一单收益 x2');
-    scheduleSave();
-    renderAll();
+    if (!ensureComplianceAccepted()) return;
+    openAdModal('模拟观看激励视频广告后，下一单收益 x2。正式发布时必须接入微信激励视频广告，并以回调结果发奖。', () => {
+      state.nextDouble = true;
+      scheduleSave();
+      renderAll();
+    });
   }
 
   function fakeAdRush() {
+    if (!ensureComplianceAccepted()) return;
     if (!currentOrder) return toast('暂无订单可加速');
-    if (!isCooking && !cooked) startCooking();
-    if (isCooking) {
-      isCooking = false;
-      cooked = true;
-      els.cookProgress.style.width = '100%';
-      els.currentDish.classList.remove('cooking');
-      toast('广告占位：快速制作完成');
-      renderAll();
-    } else if (cooked) {
-      toast('已经做好了，快去收银');
-    }
+    openAdModal('模拟观看激励视频广告后，立刻完成当前制作。正式发布时必须接入微信激励视频广告，并以回调结果发奖。', () => {
+      if (!isCooking && !cooked) startCooking(true);
+      if (isCooking) {
+        isCooking = false;
+        cooked = true;
+        els.cookProgress.style.width = '100%';
+        els.currentDish.classList.remove('cooking');
+        renderAll();
+      } else if (cooked) {
+        toast('已经做好了，快去收银');
+      }
+    });
   }
 
   // === New WeChat Mini Game Core Functions ===
@@ -339,7 +382,7 @@
     state.coins += reward;
     state.signInDays = (state.signInDays + 1) % 7;
     state.lastSignInDate = today;
-    toast(`签到成功！获得 ${reward} 金币`);
+    toast(`签到成功！获得 ${reward} 小吃币`);
     checkSignIn();
     renderSignInGrid();
     scheduleSave();
@@ -352,7 +395,7 @@
       html += `<div class="task-item ${completed ? 'completed' : ''}" data-id="${task.id}">
         <div>
           <h4>${task.name}</h4>
-          <p>奖励 ${task.reward} 金币</p>
+          <p>奖励 ${task.reward} 小吃币</p>
         </div>
         <div style="display: flex; align-items: center;">
           <span class="task-progress">${task.progress}/${task.target}</span>
@@ -378,7 +421,7 @@
     if (!task || task.claimed || task.progress < task.target) return;
     task.claimed = true;
     state.coins += task.reward;
-    toast(`任务完成！获得 ${task.reward} 金币`);
+    toast(`任务完成！获得 ${task.reward} 小吃币`);
     scheduleSave();
     renderTasks();
   }
@@ -404,26 +447,25 @@
         clearInterval(timer);
         closeModals();
         currentAdReward?.();
-        toast('广告观看完成，奖励已到账');
+        toast('模拟广告完成，试玩奖励已发放');
         els.adWatchBtn.disabled = false;
-        els.adWatchBtn.textContent = '观看广告';
+        els.adWatchBtn.textContent = '同意并模拟观看';
       }
     }, 300);
   }
 
   // === Share System (WeChat Hooks) ===
   function openShareModal() {
+    if (!ensureComplianceAccepted()) return;
+    els.shareCardText.textContent = `今日小吃街战绩：已服务 ${fmt(state.ordersServed)} 单，小吃币 ${fmt(state.coins)}`;
     els.modalOverlay.classList.remove('hidden');
     els.shareModal.classList.remove('hidden');
   }
 
   function doShare() {
     closeModals();
-    state.coins += 500;
-    state.doubleIncomeEnd = Date.now() + 3600 * 1000;
-    toast('分享成功！获得500金币+1小时双倍收益');
-    scheduleSave();
-    // 真实微信小游戏环境下调用 wx.shareAppMessage()
+    toast('已打开分享入口；本版本不因分享发放奖励');
+    // 真实微信小游戏环境下调用 wx.shareAppMessage()，不得强制分享或诱导分享。
   }
 
   function closeModals() {
@@ -431,6 +473,8 @@
     els.adModal.classList.add('hidden');
     els.shareModal.classList.add('hidden');
     els.signInModal.classList.add('hidden');
+    els.complianceModal.classList.add('hidden');
+    els.legalModal.classList.add('hidden');
   }
 
   // === Enhanced Core Functions ===
@@ -442,16 +486,16 @@
     const avgReward = rewardFor(unlockedMenu()[0] || menu[0]);
     const income = Math.floor(minutes * state.helperLevel * avgReward * 0.55);
     if (income <= 0) return;
-    els.offlineText.textContent = `助手帮你赚了 ${fmt(income)} 金币（最多统计 3 小时）`;
+    els.offlineText.textContent = `助手帮你赚了 ${fmt(income)} 小吃币（最多统计 3 小时）`;
     els.offlinePanel.classList.remove('hidden');
     // 广告翻倍选项
     const doubleBtn = document.createElement('button');
     doubleBtn.className = 'mini-btn';
-    doubleBtn.textContent = '📺 广告翻倍';
+    doubleBtn.textContent = '📺 激励广告翻倍';
     doubleBtn.addEventListener('click', () => {
       openAdModal('观看广告即可获得双倍离线收益', () => {
         state.coins += income * 2;
-        toast(`翻倍成功！获得 ${fmt(income*2)} 金币`);
+        toast(`翻倍成功！获得 ${fmt(income*2)} 小吃币`);
       });
     });
     els.offlinePanel.appendChild(doubleBtn);
@@ -514,11 +558,14 @@
 
   els.signInBadge.addEventListener('click', openSignInModal);
   els.shareBtn.addEventListener('click', openShareModal);
-  els.rankBtn.addEventListener('click', () => toast('排行榜功能开发中，即将上线'));
-  els.inviteBtn.addEventListener('click', () => openAdModal('邀请好友即可获得500金币奖励', () => {
-    state.coins += 500;
-    toast('邀请成功！获得500金币');
-  }));
+  els.rankBtn.addEventListener('click', () => {
+    if (!ensureComplianceAccepted()) return;
+    toast('好友排行需接入微信开放数据域；当前不读取真实用户信息');
+  });
+  els.inviteBtn.addEventListener('click', () => {
+    if (!ensureComplianceAccepted()) return;
+    toast('邀请入口仅模拟打开分享，不设置邀请奖励，避免诱导分享');
+  });
 
   // Modal events
   els.modalOverlay.addEventListener('click', closeModals);
@@ -528,12 +575,18 @@
   els.shareConfirmBtn.addEventListener('click', doShare);
   els.signInCancelBtn.addEventListener('click', closeModals);
   els.signInClaimBtn.addEventListener('click', claimSignIn);
+  els.acceptComplianceBtn.addEventListener('click', acceptCompliance);
+  els.exitComplianceBtn.addEventListener('click', closeModals);
+  els.privacyBtn.addEventListener('click', () => openLegal('privacy'));
+  els.termsBtn.addEventListener('click', () => openLegal('terms'));
+  els.legalCloseBtn.addEventListener('click', closeModals);
 
   window.addEventListener('beforeunload', saveState);
   document.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
 
   applyOfflineIncome();
   renderAll();
+  if (!state.complianceAccepted) openComplianceModal();
   setInterval(() => { fillQueue(); renderAll(); }, 5500);
   setInterval(helperLoop, 2800);
 })();

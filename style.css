@@ -125,8 +125,14 @@ h2 { margin: 3px 0 0; font-size: 18px; }
 .sign-in-day.claimed { background: #e9fff4; color: var(--green); }
 .sign-in-day.today { border: 2px solid var(--orange); }
 .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-actions.single { grid-template-columns: 1fr; }
 .primary-btn { min-height: 48px; border-radius: 14px; background: linear-gradient(180deg, var(--orange), var(--orange-dark)); color: white; font-weight: 900; }
 .secondary-btn { min-height: 48px; border-radius: 14px; background: #eee; color: var(--ink); font-weight: 900; }
+.compliance-card { position: sticky; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 9; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 12px auto 0; width: min(100%, 452px); padding: 9px 10px; border-radius: 16px; background: rgba(42, 28, 16, .88); color: #fff6d4; font-size: 12px; box-shadow: var(--shadow); }
+.legal-link { padding: 4px 7px; border-radius: 999px; background: rgba(255,255,255,.14); color: #fff; font-size: 12px; font-weight: 800; }
+.legal-modal { max-height: min(82vh, 620px); overflow: auto; }
+.legal-list { margin: 0 0 16px; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.legal-body p { margin: 0 0 10px; color: var(--muted); font-size: 14px; line-height: 1.55; text-align: left; }
 .hidden { display: none !important; }
 
 @keyframes bob { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-5px) } }
