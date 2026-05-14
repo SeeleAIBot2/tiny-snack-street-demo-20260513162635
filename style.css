@@ -152,3 +152,153 @@ h2 { margin: 3px 0 0; font-size: 18px; }
   .big-btn { min-height: 48px; }
   .control-card, .upgrade-card, .tip-card { margin-top: 9px; padding: 11px; }
 }
+
+
+/* === Eye-catching motion pass === */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+body::before {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255,255,255,.9) 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 12%, rgba(255,213,79,.75) 0 3px, transparent 4px),
+    radial-gradient(circle at 68% 82%, rgba(255,112,67,.35) 0 5px, transparent 6px),
+    radial-gradient(circle at 28% 76%, rgba(79,209,139,.35) 0 4px, transparent 5px);
+  animation: sparkleDrift 8s ease-in-out infinite alternate;
+}
+body::after {
+  background: linear-gradient(120deg, transparent 0 35%, rgba(255,255,255,.24) 45%, transparent 58% 100%);
+  transform: translateX(-120%);
+  animation: screenSheen 5.5s ease-in-out infinite;
+}
+.app-shell { position: relative; z-index: 1; }
+.app-shell.shake { animation: screenShake .28s ease both; }
+.coin-pill { animation: coinBreath 1.8s ease-in-out infinite; }
+.coin-pill.bump { animation: coinBump .38s cubic-bezier(.2,1.6,.35,1) both; }
+.street-card { isolation: isolate; }
+.street-card::before {
+  content: "";
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 150px;
+  background: conic-gradient(from 120deg, transparent, rgba(255,255,255,.35), transparent, rgba(255,191,0,.24), transparent);
+  mix-blend-mode: screen;
+  animation: marqueeGlow 4.8s linear infinite;
+  z-index: 1;
+  pointer-events: none;
+}
+.signboard { animation: signPop 2.4s ease-in-out infinite; }
+.signboard::after {
+  content: "✨";
+  margin-left: 6px;
+  display: inline-block;
+  animation: twinkle .9s ease-in-out infinite alternate;
+}
+.awning span { animation: awningPulse 1.8s ease-in-out infinite; }
+.awning span:nth-child(2) { animation-delay: .12s; }
+.awning span:nth-child(3) { animation-delay: .24s; }
+.awning span:nth-child(4) { animation-delay: .36s; }
+.chef { transform-origin: bottom center; animation: chefIdle 1.6s ease-in-out infinite; }
+.chef.celebrate { animation: chefCelebrate .55s cubic-bezier(.2,1.7,.25,1) both; }
+.dish-display.ready { animation: dishReady .55s cubic-bezier(.2,1.7,.25,1) both; filter: drop-shadow(0 0 12px rgba(255,226,91,.95)); }
+.progress-fill { position: relative; overflow: hidden; }
+.progress-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent);
+  transform: translateX(-100%);
+  animation: progressShine .9s linear infinite;
+}
+.big-btn, .ad-btn, .mini-btn, .primary-btn, .buy-btn, .social-btn, .task-claim-btn {
+  position: relative;
+  overflow: hidden;
+}
+.big-btn::after, .ad-btn::after, .primary-btn::after, .buy-btn::after, .social-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 0 35%, rgba(255,255,255,.45) 48%, transparent 60% 100%);
+  transform: translateX(-130%);
+  animation: buttonSheen 3s ease-in-out infinite;
+}
+.big-btn.pulse { animation: btnPulse .75s ease-in-out infinite alternate; }
+.ad-btn { animation: adGlow 2s ease-in-out infinite; }
+.customer.arrive { animation: customerArrive .48s cubic-bezier(.18,1.35,.3,1) both; }
+.customer.happy .avatar { animation: happyJump .58s cubic-bezier(.2,1.7,.25,1) both; }
+.combo-badge {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 1000;
+  letter-spacing: .03em;
+  background: linear-gradient(135deg, #ff3d77, #ff9f1c, #45c486);
+  box-shadow: 0 10px 24px rgba(255,91,54,.35);
+  animation: comboPop 1s cubic-bezier(.2,1.55,.25,1) forwards;
+}
+.fx-particle {
+  position: absolute;
+  z-index: 5;
+  left: var(--x, 50%);
+  bottom: var(--y, 44px);
+  font-weight: 1000;
+  font-size: var(--size, 22px);
+  filter: drop-shadow(0 5px 4px rgba(70,30,0,.22));
+  animation: burstFly var(--dur, .95s) cubic-bezier(.15,.9,.2,1) forwards;
+}
+.fx-ring {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: 52px;
+  width: 40px;
+  height: 40px;
+  margin-left: -20px;
+  border: 4px solid rgba(255,242,142,.9);
+  border-radius: 50%;
+  animation: rewardRing .7s ease-out forwards;
+}
+.task-item.completed { animation: taskGlow 1.2s ease-in-out infinite alternate; }
+.upgrade.pop { animation: cardPop .45s cubic-bezier(.2,1.55,.25,1) both; }
+.modal-content { animation: modalPop .28s cubic-bezier(.2,1.35,.3,1) both; }
+.toast:not(.hidden) { animation: toastIn .25s cubic-bezier(.2,1.35,.3,1) both; }
+
+@keyframes sparkleDrift { from { transform: translate3d(0,0,0) scale(1); opacity: .75; } to { transform: translate3d(10px,-14px,0) scale(1.04); opacity: 1; } }
+@keyframes screenSheen { 0%,55% { transform: translateX(-120%); } 78%,100% { transform: translateX(120%); } }
+@keyframes marqueeGlow { to { transform: rotate(360deg); } }
+@keyframes signPop { 0%,100% { transform: translateX(-50%) translateY(0) rotate(-1deg); } 50% { transform: translateX(-50%) translateY(-3px) rotate(1deg); } }
+@keyframes twinkle { from { transform: scale(.8) rotate(-12deg); opacity: .55; } to { transform: scale(1.25) rotate(14deg); opacity: 1; } }
+@keyframes awningPulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.18) saturate(1.15); } }
+@keyframes chefIdle { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg) translateY(-2px); } }
+@keyframes chefCelebrate { 0% { transform: scale(1) rotate(0); } 45% { transform: scale(1.22) rotate(-12deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes dishReady { 0% { transform: scale(.88) rotate(-8deg); } 45% { transform: scale(1.35) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes progressShine { to { transform: translateX(100%); } }
+@keyframes buttonSheen { 0%,65% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
+@keyframes btnPulse { from { filter: brightness(1); transform: translateY(0); } to { filter: brightness(1.12); transform: translateY(-1px); } }
+@keyframes adGlow { 0%,100% { box-shadow: 0 6px 0 rgba(0,0,0,.22), 0 0 0 rgba(255,224,91,0); } 50% { box-shadow: 0 6px 0 rgba(0,0,0,.22), 0 0 18px rgba(255,224,91,.55); } }
+@keyframes coinBreath { 0%,100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+@keyframes coinBump { 0% { transform: scale(1); } 45% { transform: scale(1.24) rotate(-4deg); } 100% { transform: scale(1); } }
+@keyframes customerArrive { from { opacity: 0; transform: translateX(42px) translateY(16px) scale(.8); } to { opacity: 1; transform: translateX(0) translateY(0) scale(1); } }
+@keyframes happyJump { 0% { transform: translateY(0) scale(1); } 45% { transform: translateY(-16px) scale(1.18); } 100% { transform: translateY(0) scale(1); } }
+@keyframes comboPop { 0% { opacity: 0; transform: translateX(-50%) translateY(14px) scale(.65); } 20% { opacity: 1; } 78% { opacity: 1; transform: translateX(-50%) translateY(-8px) scale(1.08); } 100% { opacity: 0; transform: translateX(-50%) translateY(-24px) scale(.92); } }
+@keyframes burstFly { 0% { opacity: 0; transform: translate(-50%, 0) scale(.45) rotate(0); } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), var(--dy, -90px)) scale(1.15) rotate(var(--rot, 20deg)); } }
+@keyframes rewardRing { to { opacity: 0; transform: scale(4.6); } }
+@keyframes screenShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-2px); } }
+@keyframes taskGlow { from { box-shadow: inset 0 0 0 rgba(69,196,134,0); } to { box-shadow: inset 0 0 24px rgba(69,196,134,.24); } }
+@keyframes cardPop { 0% { transform: scale(.98); } 50% { transform: scale(1.035); } 100% { transform: scale(1); } }
+@keyframes modalPop { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(16px) scale(.96); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+}

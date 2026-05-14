@@ -39,6 +39,8 @@
   let cookDuration = 2400;
   let toastTimer = null;
   let saveTimer = null;
+  let comboStreak = 0;
+  let comboTimer = null;
 
   const $ = (id) => document.getElementById(id);
   const els = {
@@ -130,7 +132,7 @@
     els.queue.innerHTML = '';
     queue.forEach((customer, idx) => {
       const card = document.createElement('div');
-      card.className = 'customer';
+      card.className = 'customer arrive';
       card.innerHTML = `<div class="bubble">${customer.item.emoji} ${idx === 0 ? '我先!' : ''}</div><div class="avatar">${customer.face}</div>`;
       els.queue.appendChild(card);
     });
@@ -193,7 +195,9 @@
     renderTasks();
     checkSignIn();
     els.cookBtn.disabled = isCooking || cooked || !currentOrder;
+    els.cookBtn.classList.toggle('pulse', !isCooking && !cooked && !!currentOrder);
     els.serveBtn.disabled = !cooked;
+    els.serveBtn.classList.toggle('pulse', cooked);
     els.doubleBtn.textContent = state.nextDouble ? '✅ 下一单已双倍' : '📺 激励广告·双倍下一单';
   }
 
@@ -224,6 +228,65 @@
       : '<p>本游戏为轻度经营试玩原型，不含充值、抽奖、赌博、现金提现或实物兑换。</p><p>激励广告、分享、好友排行目前均为模拟能力；正式上线需接入微信官方接口，不得强制分享、诱导分享或虚假承诺奖励。</p><p>建议 8 周岁以上用户体验；未成年人应在监护人同意和陪同下使用。</p>';
     els.modalOverlay.classList.remove('hidden');
     els.legalModal.classList.remove('hidden');
+  }
+
+  function screenShake() {
+    const shell = document.querySelector('.app-shell');
+    shell?.classList.remove('shake');
+    void shell?.offsetWidth;
+    shell?.classList.add('shake');
+  }
+
+  function bumpCoins() {
+    els.coins.parentElement?.classList.remove('bump');
+    void els.coins.parentElement?.offsetWidth;
+    els.coins.parentElement?.classList.add('bump');
+  }
+
+  function burst(kind = 'coins', count = 14) {
+    const map = {
+      coins: ['🪙','✨','💥','⭐'],
+      steam: ['♨️','✨','🔥','💫'],
+      upgrade: ['🚀','✨','⭐','💎'],
+      task: ['✅','🎁','✨','⭐']
+    };
+    const ring = document.createElement('div');
+    ring.className = 'fx-ring';
+    els.popLayer.appendChild(ring);
+    setTimeout(() => ring.remove(), 750);
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'fx-particle';
+      p.textContent = map[kind][Math.floor(Math.random() * map[kind].length)];
+      p.style.setProperty('--x', `${38 + Math.random() * 24}%`);
+      p.style.setProperty('--y', `${36 + Math.random() * 34}px`);
+      p.style.setProperty('--dx', `${-110 + Math.random() * 220}px`);
+      p.style.setProperty('--dy', `${-70 - Math.random() * 120}px`);
+      p.style.setProperty('--rot', `${-80 + Math.random() * 160}deg`);
+      p.style.setProperty('--size', `${18 + Math.random() * 16}px`);
+      p.style.setProperty('--dur', `${0.75 + Math.random() * .55}s`);
+      els.popLayer.appendChild(p);
+      setTimeout(() => p.remove(), 1400);
+    }
+  }
+
+  function showCombo() {
+    if (comboStreak < 2) return;
+    const badge = document.createElement('div');
+    badge.className = 'combo-badge';
+    badge.textContent = comboStreak >= 5 ? `🔥 连续${comboStreak}单 爆单中!` : `⚡ 连续${comboStreak}单`;
+    els.popLayer.appendChild(badge);
+    setTimeout(() => badge.remove(), 1050);
+  }
+
+  function celebrateSale(reward) {
+    bumpCoins();
+    screenShake();
+    burst('coins', Math.min(24, 10 + Math.floor(reward / 8)));
+    showCombo();
+    document.querySelector('.chef')?.classList.add('celebrate');
+    setTimeout(() => document.querySelector('.chef')?.classList.remove('celebrate'), 650);
+    document.querySelector('.customer')?.classList.add('happy');
   }
 
   function toast(text) {
@@ -262,6 +325,8 @@
       isCooking = false;
       cooked = true;
       els.currentDish.classList.remove('cooking');
+      els.currentDish.classList.add('ready');
+      burst('steam');
       els.orderHint.textContent = '做好了！点击收银完成订单';
       renderAll();
       return;
@@ -278,11 +343,16 @@
     updateTaskProgress('daily1', 1);
     updateTaskProgress('daily2', reward);
     state.nextDouble = false;
+    comboStreak += 1;
+    clearTimeout(comboTimer);
+    comboTimer = setTimeout(() => { comboStreak = 0; }, 3500);
+    celebrateSale(reward);
     queue.shift();
     currentOrder = queue[0] || null;
     cooked = false;
     isCooking = false;
     els.cookProgress.style.width = '0%';
+    els.currentDish.classList.remove('ready');
     popCoins(reward);
     if (!auto) toast(`卖出 ${state.ordersServed} 单，收入 +${fmt(reward)}`);
     scheduleSave();
@@ -304,8 +374,13 @@
     state[levelKey] += 1;
     updateTaskProgress('daily3', 1);
     toast(type === 'helper' ? '助手上岗：会自动制作订单' : '升级成功，效率提升');
+    burst('upgrade');
+    screenShake();
     scheduleSave();
     renderAll();
+    const changed = els.upgrades.querySelector(`[data-type="${type}"]`)?.closest('.upgrade');
+    changed?.classList.add('pop');
+    setTimeout(() => changed?.classList.remove('pop'), 500);
   }
 
   function fakeAdDouble() {
@@ -380,6 +455,8 @@
     const rewards = [10,30,50,80,120,200,500];
     const reward = rewards[state.signInDays];
     state.coins += reward;
+    burst('task');
+    bumpCoins();
     state.signInDays = (state.signInDays + 1) % 7;
     state.lastSignInDate = today;
     toast(`签到成功！获得 ${reward} 小吃币`);
@@ -421,6 +498,8 @@
     if (!task || task.claimed || task.progress < task.target) return;
     task.claimed = true;
     state.coins += task.reward;
+    burst('task');
+    bumpCoins();
     toast(`任务完成！获得 ${task.reward} 小吃币`);
     scheduleSave();
     renderTasks();
